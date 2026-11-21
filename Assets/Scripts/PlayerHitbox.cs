@@ -1,16 +1,20 @@
+using System;
 using UnityEngine;
 
 public class PlayerHitbox : MonoBehaviour
 {
-    public int power;
+    public static event Action<NoteType> OnNoteAbsorbed;
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Bullet"))
+        if (!other.CompareTag("Bullet")) return;
+
+        Bullet bullet = other.GetComponent<Bullet>();
+        if (bullet != null)
         {
-            power++;
-            Debug.Log("Poder: " + power);
-            Destroy(other.gameObject);
+            Debug.Log("Nota absorbida: " + bullet.Note);
+            OnNoteAbsorbed?.Invoke(bullet.Note);
         }
+        Destroy(other.gameObject);
     }
 }

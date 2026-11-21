@@ -16,7 +16,7 @@ public class TestBulletSpawner : MonoBehaviour
             float angle = i * 360f / count * Mathf.Deg2Rad;
             Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
             Bullet b = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
-            b.Launch(dir, speed);
+            b.Launch(dir, speed, (NoteType)Random.Range(0, 4));
         }
     }
 }
