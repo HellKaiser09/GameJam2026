@@ -10,6 +10,8 @@ public class PlayerHitbox : MonoBehaviour
         if (!other.CompareTag("Bullet")) return;
 
         Bullet bullet = other.GetComponent<Bullet>();
+        if (bullet != null && bullet.IsReflected) return; // NUEVO: ignora balas devueltas
+
         if (bullet != null)
         {
             Debug.Log("Nota absorbida: " + bullet.Note);
