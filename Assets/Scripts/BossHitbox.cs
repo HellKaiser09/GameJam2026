@@ -1,11 +1,8 @@
 using UnityEngine;
 
-[RequireComponent(typeof(BossHealth))]
 public class BossHitbox : MonoBehaviour
 {
-    BossHealth health;
-
-    void Awake() { health = GetComponent<BossHealth>(); }
+    [SerializeField] FightManager fight;
 
     void OnTriggerEnter2D(Collider2D other)
     {
@@ -14,8 +11,7 @@ public class BossHitbox : MonoBehaviour
         Bullet bullet = other.GetComponent<Bullet>();
         if (bullet == null || !bullet.IsReflected) return;
 
-        health.TakeDamage(bullet.ReflectedDamage);
-        Debug.Log("Vida del jefe: " + health.CurrentHealth);
+        fight.AddTime(bullet.ReflectedDamage); // segundos extra en la barra
         Destroy(other.gameObject);
     }
 }

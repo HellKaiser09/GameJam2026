@@ -15,6 +15,18 @@ public class BeatClock : MonoBehaviour
     int lastBeat = -1;
     double SecondsPerBeat => 60.0 / bpm;
 
+    // Numero del ultimo beat que ya sono (-1 si aun no empieza)
+    public int CurrentBeat => lastBeat;
+
+    // Segundos que faltan (o pasaron) respecto al beat mas cercano
+    public float DistanceToNearestBeat()
+    {
+        double t = AudioSettings.dspTime - songStartDsp - firstBeatOffset;
+        if (t < 0) return float.MaxValue;
+        double frac = t % SecondsPerBeat;
+        return (float)Math.Min(frac, SecondsPerBeat - frac);
+    }
+
     void Awake()
     {
         source = GetComponent<AudioSource>();
