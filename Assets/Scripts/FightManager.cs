@@ -55,7 +55,7 @@ public class FightManager : MonoBehaviour
 
     void Update()
     {
-        if (Over || Paused || RetroIntro.Playing) return; // la barra no corre durante la intro
+        if (Over || Paused || RetroIntro.Playing || Tutorial.Active) return; // la barra no corre durante la intro
 
         TimeLeft -= Time.deltaTime;
         if (TimeLeft <= 0f)
@@ -84,7 +84,7 @@ public class FightManager : MonoBehaviour
 
     void LoseLife()
     {
-        if (Over) return;
+        if (Over || Tutorial.Active) return; // en el tutorial no se pierden peces
         Lives--;
         OnLivesChanged?.Invoke();
         Debug.Log("Vidas: " + Lives);

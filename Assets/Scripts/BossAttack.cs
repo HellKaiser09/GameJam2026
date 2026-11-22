@@ -70,7 +70,7 @@ public class BossAttack : MonoBehaviour
 
     void Update()
     {
-        if (RetroIntro.Playing) return; // en la intro, RetroIntro mueve al jefe
+        if (RetroIntro.Playing || Tutorial.Active) return; // en la intro / tutorial el jefe no se mueve solo
 
         if (Staggering)
         {
@@ -97,7 +97,7 @@ public class BossAttack : MonoBehaviour
 
     void HandleStep(int step)
     {
-        if (Stopped || RetroIntro.Playing || Staggering) return;
+        if (Stopped || RetroIntro.Playing || Tutorial.Active || Staggering) return;
         int bar = step / SongChart.StepsPerBar;
         int s = step % SongChart.StepsPerBar;
         int level = SongChart.Level(bar);

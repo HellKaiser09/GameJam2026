@@ -203,7 +203,7 @@ public class BeatClock : MonoBehaviour
     // Pausa inmediata (menu de pausa); Resume() la continua en sincronia
     public void PauseNow()
     {
-        if (frozen) return;
+        if (frozen || !Started) return;
         frozen = true;
         frozenSongTime = SongTimeNow();
         StopAllCoroutines();
@@ -214,7 +214,7 @@ public class BeatClock : MonoBehaviour
     // Vuelve a tocar desde donde se quedo y re-sincroniza el reloj con el audio
     public void Resume()
     {
-        if (!frozen) return;
+        if (!frozen || !Started) return;
         StopAllCoroutines();
         source.pitch = 1f;
         double total = frozenSongTime + firstBeatOffset; // posicion aproximada de la cancion
@@ -237,8 +237,18 @@ public class BeatClock : MonoBehaviour
         distortLeft = distortTotal = time;
     }
 
+    public bool Started { get; private set; }
+
     void Start()
     {
+        if (Tutorial.Active) return; // el tutorial arranca la cancion al terminar
+        StartSong();
+    }
+
+    public void StartSong()
+    {
+        if (Started) return;
+        Started = true;
         songStartDsp = AudioSettings.dspTime + 0.5;
         source.PlayScheduled(songStartDsp);
     }

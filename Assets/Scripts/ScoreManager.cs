@@ -49,6 +49,14 @@ public class ScoreManager : MonoBehaviour
     void OnEnable() { PlayerHitbox.OnNoteAbsorbed += HandleNote; }
     void OnDisable() { PlayerHitbox.OnNoteAbsorbed -= HandleNote; }
 
+    // Empieza todo desde la ronda 1 (al terminar el tutorial)
+    public void RestartRounds()
+    {
+        finished = false;
+        graceUntil = 0f;
+        StartRound(0);
+    }
+
     void StartRound(int index)
     {
         round = index;

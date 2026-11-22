@@ -49,7 +49,7 @@ public class PlayerParry : MonoBehaviour
     {
         // Anillo quieto con tu alcance: se ve si el parry esta listo, desaparece en cooldown
         float baseScale = radius / 0.44f / Mathf.Max(0.0001f, transform.lossyScale.x);
-        bool ready = Ready && beatClock.CurrentBeat >= 0;
+        bool ready = Tutorial.Active ? Time.time >= tutorialNext : (Ready && beatClock.CurrentBeat >= 0);
         rangeRing.transform.localScale = new Vector3(baseScale, baseScale, 1f);
         Color c = readyColor;
         c.a = ready ? 0.35f : 0f;
@@ -80,10 +80,17 @@ public class PlayerParry : MonoBehaviour
         return Sprite.Create(t, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), N);
     }
 
+    float tutorialNext; // en el tutorial no hay musica: el cooldown es por tiempo
+
     void TryParry()
     {
         int beat = beatClock.CurrentBeat;
-        if (beat - lastParryBeat < beatsBetweenParries) return;
+        if (Tutorial.Active)
+        {
+            if (Time.time < tutorialNext) return;
+            tutorialNext = Time.time + 0.5f;
+        }
+        else if (beat - lastParryBeat < beatsBetweenParries) return;
         lastParryBeat = beat;
 
         bool onBeat = beatClock.DistanceToNearestBeat() <= beatWindow;

@@ -71,6 +71,15 @@ public class RetroIntro : MonoBehaviour
     {
         if (done) return;
 
+        // Mientras corre el tutorial, la intro espera escondida (y el HUD se ve)
+        if (Tutorial.Active)
+        {
+            root.gameObject.SetActive(false);
+            if (hud != null) hud.alpha = 1f;
+            return;
+        }
+        if (!root.gameObject.activeSelf) { root.gameObject.SetActive(true); if (hud != null) hud.alpha = 0f; }
+
         int beat = beatClock.CurrentBeat;      // -1 antes de que empiece la cancion
         float ph = beatClock.BeatPhase;        // 0 en el beat -> 1
         float t = beat < 0 ? 0f : beat + ph;   // tiempo en beats

@@ -157,7 +157,7 @@ public class GameFeedback : MonoBehaviour
         else { chroma.intensity.value = 0f; lens.intensity.value = 0f; }
 
         // Barra de desafinacion casi llena: la camara tiembla cada vez mas
-        if (!fight.Over && !fight.Paused && !PauseMenu.Paused && !RetroIntro.Playing && fight.TimeMax > 0f)
+        if (!fight.Over && !fight.Paused && !PauseMenu.Paused && !RetroIntro.Playing && !Tutorial.Active && fight.TimeMax > 0f)
         {
             float fill = 1f - fight.TimeLeft / fight.TimeMax;
             float k = Mathf.Clamp01((fill - tensionStart) / (1f - tensionStart));

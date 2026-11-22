@@ -31,6 +31,9 @@ public class FightUI : MonoBehaviour
     [SerializeField] Color panelColor = new Color(0.05f, 0.03f, 0.15f, 0.72f);
     [SerializeField] Color nextColor = new Color(1f, 0.88f, 0.30f);
 
+    [Header("Filas JEFE / TU")]
+    [SerializeField, Tooltip("Siguen funcionando por dentro; solo se dejan de dibujar")] bool showScoreRows = false;
+
     [Header("Ayuda")]
     [SerializeField, Tooltip("Hace brillar las balas de la nota que necesitas y la muestra en la casilla que sigue")]
     bool showNeededNote = true;
@@ -561,6 +564,7 @@ public class FightUI : MonoBehaviour
             "REINTENTAR", 26, TextAnchor.MiddleCenter, textColor);
         endPanel = panel.gameObject;
         endPanel.SetActive(false);
+        scorePanel.gameObject.SetActive(showScoreRows);
     }
 
     RectTransform Rect(string name, Transform parent, Vector2 aMin, Vector2 aMax, Vector2 pivot, Vector2 pos, Vector2 size)

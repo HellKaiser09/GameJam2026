@@ -49,7 +49,7 @@ public class PauseMenu : MonoBehaviour
         prevTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         // Si la musica ya estaba parada (pausa entre rondas) no la tocamos
-        stoppedMusic = !beatClock.IsStopped;
+        stoppedMusic = beatClock.Started && !beatClock.IsStopped;
         if (stoppedMusic) beatClock.PauseNow();
         panel.SetActive(true);
         panel.transform.SetAsLastSibling();

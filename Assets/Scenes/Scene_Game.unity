@@ -146,7 +146,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 635178172}
@@ -258,6 +258,7 @@ MonoBehaviour:
   notesPerRound: 040000000600000008000000i
   opposites: 0300000002000000010000000000000005000000040000000700000006000000i
   resetOnMistake: 0
+  mistakeGrace: 1.5
 --- !u!1 &410625643
 GameObject:
   m_ObjectHideFlags: 0
@@ -477,6 +478,7 @@ MonoBehaviour:
   - 30
   - 35
   - 40
+  oneTimeHeal: 1
 --- !u!4 &550267327
 Transform:
   m_ObjectHideFlags: 0
@@ -505,6 +507,8 @@ GameObject:
   - component: {fileID: 556820287}
   - component: {fileID: 556820286}
   - component: {fileID: 556820291}
+  - component: {fileID: 556820292}
+  - component: {fileID: 556820293}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -619,13 +623,49 @@ MonoBehaviour:
   - {fileID: 21300000, guid: f9bf07aa0c5e6e14dadd6f5c3d6ebc5d, type: 3}
   - {fileID: 21300000, guid: 10c3c8aee0ca57b479fcface23013f62, type: 3}
   winBackground: {fileID: 8499011838631215071, guid: 8a9fb6565b3d6714b9a1f2eebc788fa7, type: 3}
+  loseCat: {fileID: 21300000, guid: 6c7f73458b150ed4db9f8f30d10db2ab, type: 3}
   barLow: {r: 0.3, g: 0.85, b: 0.45, a: 1}
   barHigh: {r: 0.95, g: 0.25, b: 0.3, a: 1}
   textColor: {r: 1, g: 0.95, b: 0.75, a: 1}
   labelColor: {r: 0.79, g: 0.72, b: 1, a: 1}
   panelColor: {r: 0.05, g: 0.03, b: 0.15, a: 0.72}
   nextColor: {r: 1, g: 0.88, b: 0.3, a: 1}
+  showScoreRows: 0
   showNeededNote: 1
+--- !u!114 &556820292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 556820285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2d34e66faf2cb34481a1d30838964d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RetroIntro
+  beatClock: {fileID: 724958211}
+  boss: {fileID: 1734593264}
+  titleLogo: {fileID: 21300000, guid: 185e6393f6ce6834697f3bcf0c262968, type: 3}
+  warningText: WARNING
+  warningSub: SE ACERCA UNA NAVE DESAFINADA
+  stageText: NIVEL 1 - LA LUNA
+  goText: "\xA1AFINA!"
+  introBeats: 16
+--- !u!114 &556820293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 556820285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c33818ebe3bb2024f9ccb36f338b72f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseMenu
+  fight: {fileID: 550267326}
+  beatClock: {fileID: 724958211}
 --- !u!1 &635178168
 GameObject:
   m_ObjectHideFlags: 0
@@ -683,7 +723,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.15
+  m_Radius: 0.1
 --- !u!50 &635178170
 Rigidbody2D:
   serializedVersion: 5
@@ -801,10 +841,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   speed: 7
-  focusMultiplier: 0.4
   minBounds: {x: -8.6, y: -4.6}
   maxBounds: {x: 8.6, y: 2.6}
   hitboxDot: {fileID: 158417897}
+  hitboxRadius: 0.06
+  dotDiameter: 0.16
+  focusSlow: 0.3
+  focusMaxTime: 2.5
+  focusRecharge: 3
+  focusBulletSpeed: 0.7
 --- !u!114 &635178174
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -839,6 +884,7 @@ MonoBehaviour:
   normalSeconds: 1
   onBeatSeconds: 2
   beatWindow: 0.12
+  readyColor: {r: 0.25, g: 0.88, b: 0.94, a: 0.11764706}
 --- !u!1 &670183076
 GameObject:
   m_ObjectHideFlags: 0
@@ -850,6 +896,7 @@ GameObject:
   - component: {fileID: 670183077}
   - component: {fileID: 670183079}
   - component: {fileID: 670183078}
+  - component: {fileID: 670183080}
   m_Layer: 0
   m_Name: BossVisual
   m_TagString: Untagged
@@ -954,6 +1001,24 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &670183080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670183076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9049a8d3253985543a1fb20477eb95ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossSpin
+  frames:
+  - {fileID: 21300000, guid: 8c4442c463300734a941d70ddb8470c9, type: 3}
+  - {fileID: 21300000, guid: b648edfe2c8b9ba4bad37ab2d4e1c02e, type: 3}
+  - {fileID: 21300000, guid: a2d601018c9febf4b8cecbbf3143b03d, type: 3}
+  - {fileID: 21300000, guid: d0a81d270be03c74caa08c0751d67293, type: 3}
+  frameTime: 0.05
 --- !u!1 &724958210
 GameObject:
   m_ObjectHideFlags: 0
@@ -1094,6 +1159,64 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &848955553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 848955555}
+  - component: {fileID: 848955554}
+  m_Layer: 0
+  m_Name: Feedback
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &848955554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 848955553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bef47219b6e924f4d97618ee89d3daa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameFeedback
+  score: {fileID: 166298630}
+  fight: {fileID: 550267326}
+  beatClock: {fileID: 724958211}
+  cam: {fileID: 1894975483}
+  player: {fileID: 635178172}
+  playerVisual: {fileID: 1875183637}
+  boss: {fileID: 1734593264}
+  bossVisual: {fileID: 670183077}
+  roundBreakSeconds: 2.6
+  hitGlitch: 0.6
+  roundGlitch: 1
+  victorySongTime: 16
+  tensionStart: 0.6
+  tensionShake: 0.09
+--- !u!4 &848955555
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 848955553}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1325,18 +1448,21 @@ MonoBehaviour:
   fight: {fileID: 550267326}
   bulletPrefab: {fileID: 2600150687558268704, guid: 879ca0e1bbcd7b34f874db0d576ea540, type: 3}
   player: {fileID: 635178172}
-  expectedChance: 0.3
-  beatsPerCircle: 020000000200000001000000i
-  circleSpeed:
+  neededChance: 0.2
+  ringBullets: 0c0000001000000014000000i
+  spiralBullets: 020000000300000004000000i
+  fanBullets: 030000000500000007000000i
+  roundSpeed:
+  - 2.6
   - 3
-  - 3.5
-  - 4
-  burstSpeed:
-  - 5
-  - 6
-  - 7
-  circleCount: 12
-  burstSpread: 10
+  - 3.4
+  calmSpeed: 0.9
+  intenseSpeed: 1.25
+  fanExtraSpeed: 1.6
+  fanSpread: 12
+  spiralTurn: 13
+  swayAmplitude: 3
+  swayBeats: 16
 --- !u!114 &1734593262
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1437,6 +1563,7 @@ GameObject:
   - component: {fileID: 1875183635}
   - component: {fileID: 1875183637}
   - component: {fileID: 1875183636}
+  - component: {fileID: 1875183638}
   m_Layer: 0
   m_Name: PlayerVisual
   m_TagString: Untagged
@@ -1454,7 +1581,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_LocalScale: {x: 1.6, y: 1.6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 635178172}
@@ -1541,6 +1668,39 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &1875183638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1875183634}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6327c98ffb61e046b84bcfeeedd14e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatAnimator
+  idleFrames:
+  - {fileID: 21300000, guid: 23b190f75fdeae84284d08653ea3e6d9, type: 3}
+  - {fileID: 21300000, guid: 3d76fcc8d049fa541bbbe1a9dc52f1ac, type: 3}
+  - {fileID: 21300000, guid: ffa97cfb7c8132440bec80f12ef35236, type: 3}
+  - {fileID: 21300000, guid: 2495c265417157247a0610010a10f6c1, type: 3}
+  - {fileID: 21300000, guid: 918a860f4851e0842a5433775beec21b, type: 3}
+  - {fileID: 21300000, guid: 70bd638be1acb104a9233f693819a471, type: 3}
+  - {fileID: 21300000, guid: 5017b920d0ad7e5448446174a921eac3, type: 3}
+  - {fileID: 21300000, guid: d870bbe14ef4ed641845530d1b0bfac9, type: 3}
+  flyFrames:
+  - {fileID: 21300000, guid: 3d4192b330817034b8da78cb7e760e35, type: 3}
+  - {fileID: 21300000, guid: 29d16488262c7c0478144170d87fbd90, type: 3}
+  - {fileID: 21300000, guid: b4e97ec1ee35519438a163417a03adb2, type: 3}
+  hurtFrames:
+  - {fileID: 21300000, guid: 6fb682b4b8bad594ca77ae800528c4d0, type: 3}
+  - {fileID: 21300000, guid: b030add1325382a428af81a58f043c6c, type: 3}
+  - {fileID: 21300000, guid: 3b57660f2880f474886160e72e96f297, type: 3}
+  deadSprite: {fileID: 21300000, guid: 66a85be6d3ce95245b67f9e887a167bc, type: 3}
+  idleFps: 8
+  flyFps: 10
+  hurtFps: 10
 --- !u!1 &1894975481
 GameObject:
   m_ObjectHideFlags: 0
@@ -1657,7 +1817,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -1786,3 +1946,4 @@ SceneRoots:
   - {fileID: 724958213}
   - {fileID: 550267327}
   - {fileID: 410625645}
+  - {fileID: 848955555}
