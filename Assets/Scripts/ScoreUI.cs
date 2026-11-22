@@ -14,6 +14,24 @@ public class ScoreUI : MonoBehaviour
 
     void Start()
     {
+        manager.OnRoundStarted += Rebuild;
+        manager.OnProgressChanged += Refresh;
+        Rebuild();
+    }
+
+    void OnDestroy()
+    {
+        if (manager == null) return;
+        manager.OnRoundStarted -= Rebuild;
+        manager.OnProgressChanged -= Refresh;
+    }
+
+    void Rebuild()
+    {
+        Clear(bossRow);
+        Clear(playerRow);
+        playerSlots.Clear();
+
         foreach (NoteType note in manager.BossScore)
         {
             Image boss = Instantiate(slotPrefab, bossRow);
@@ -23,14 +41,16 @@ public class ScoreUI : MonoBehaviour
             mine.color = empty;
             playerSlots.Add(mine);
         }
-
-        manager.OnProgressChanged += Refresh;
         Refresh();
     }
 
-    void OnDestroy()
+    void Clear(Transform row)
     {
-        if (manager != null) manager.OnProgressChanged -= Refresh;
+        foreach (Transform child in row)
+        {
+            child.gameObject.SetActive(false);
+            Destroy(child.gameObject);
+        }
     }
 
     void Refresh()

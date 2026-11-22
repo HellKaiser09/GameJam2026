@@ -1,1 +1,1 @@
-public enum NoteType { Do, Re, Mi, Fa }
+public enum NoteType { Do, Re, Mi, Fa, Sol, La, Si, Do2 }

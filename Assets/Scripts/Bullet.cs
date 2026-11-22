@@ -4,11 +4,16 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField] float lifetime = 8f;
+    [SerializeField] Vector2 killBounds = new Vector2(9.5f, 5.5f);
 
     public NoteType Note { get; private set; }
 
     static readonly Color[] noteColors =
-        { Color.red, Color.blue, Color.green, Color.yellow };
+    {
+        Color.red, Color.blue, Color.green, Color.yellow,
+        new Color(1f, 0.5f, 0f), Color.cyan, Color.magenta,
+        new Color(0.8f, 0.8f, 0.8f)
+    };
 
     public static Color GetColor(NoteType n) { return noteColors[(int)n]; }
 
@@ -25,4 +30,11 @@ public class Bullet : MonoBehaviour
     }
 
     void Start() { Destroy(gameObject, lifetime); }
+
+    void Update()
+    {
+        Vector2 p = transform.position;
+        if (Mathf.Abs(p.x) > killBounds.x || Mathf.Abs(p.y) > killBounds.y)
+            Destroy(gameObject);
+    }
 }

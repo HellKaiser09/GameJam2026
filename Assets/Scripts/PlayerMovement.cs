@@ -5,8 +5,8 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] float speed = 7f;
     [SerializeField] float focusMultiplier = 0.4f;
-    [SerializeField] Vector2 minBounds = new Vector2(-8f, -4.5f);
-    [SerializeField] Vector2 maxBounds = new Vector2(8f, 4.5f);
+    [SerializeField] Vector2 minBounds = new Vector2(-8.1f, -4.3f);
+    [SerializeField] Vector2 maxBounds = new Vector2(8.1f, 2.4f);
     [SerializeField] GameObject hitboxDot;
 
     Rigidbody2D rb;
