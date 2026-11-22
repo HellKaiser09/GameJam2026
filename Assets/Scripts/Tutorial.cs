@@ -120,32 +120,30 @@ public class Tutorial : MonoBehaviour
     IEnumerator Run()
     {
         yield return Fade(1f, 0f, 0.7f);
-        yield return SayAndWait("¡Miau! Soy Mei Mei. Ese ratón de la nave está desafinando TODA la luna...", 1.2f);
-        yield return SayAndWait("Me duelen las orejitas. ¡Ayúdame, porfa!", 1.0f);
+        yield return SayAndWait("Ola soy MeiMei te enseñare a jugar a este juego", 1.2f);
 
-        Say("A ver, muévete con las flechas. Así, despacito.");
+        Say("te mueves con las flechas del teclado.");
         yield return StepMove();
 
-        Say("¿Ves la que brilla? Está desafinada. ¡Atrápala, atrápala!");
+        Say("Las balas que brillan son las que ayudan a derrotar al jefe");
         yield return StepCatch();
-        yield return SayAndWait("¡NYAAA! ¿Viste? Cada nota que afinas le rompe su partitura.", 1.2f);
 
-        Say("Las que NO brillan pican feo. ¡Esquívalas!");
+        Say("Las que no brillan son las que te hacen perder vida");
         yield return StepDodge();
-        yield return SayAndWait("Si te pegan pierdes un pescado... y solo tienes tres. Cuídalos.", 1.0f);
+        yield return SayAndWait("Si te pegan pierdes un pescado asi que cuida que no te peguen", 1.0f);
 
-        Say("Si una se acerca, dale ESPACIO y regrésasela. ¡Toma!");
+        Say("Si una se acerca, dale ESPACIO y regrésasela");
         yield return StepParry();
-        yield return SayAndWait("¡Le diste! Eso calma la barra de desafinación. Purr...", 1.0f);
+        yield return SayAndWait("Esooo, asi tambien aumentas el tiempo que tienes", 1.0f);
 
-        Say("¿Son muchas? Mantén SHIFT y todo va más lento.");
+        Say("Vienen muchas balas, mantén SHIFT y todo va más lento.");
         yield return StepFocus();
-        yield return SayAndWait("Pero el foco cansa, ¿eh? Yo me cansé solo de verte.", 1.0f);
+        yield return SayAndWait("Pero el foco se gasta usalo con inteligencia.", 1.0f);
 
         ClearBullets();
         check.gameObject.SetActive(true);
         StartCoroutine(PopCheck());
-        yield return SayAndWait("¡Listo! Ahora sí... ¡a afinar esa nave! Miau.", 1.2f);
+        yield return SayAndWait("¡Listo ya sabes jugar.", 1.2f);
 
         yield return Leave(0.9f);
     }
@@ -459,7 +457,7 @@ public class Tutorial : MonoBehaviour
         Bar(check, new Vector2(18, 6), new Vector2(110, 22), -50f);
 
         // Caja de dialogo retro (arriba al centro, donde no estorba al gato)
-        RectTransform box = Rect("DialogBox", root, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -84), new Vector2(680, 112));
+        RectTransform box = Rect("DialogBox", root, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -112), new Vector2(640, 150));
         Image boxBg = box.gameObject.AddComponent<Image>();
         boxBg.color = new Color(0.04f, 0.02f, 0.12f, 0.92f); boxBg.raycastTarget = false;
         Outline bo = box.gameObject.AddComponent<Outline>();
@@ -470,26 +468,25 @@ public class Tutorial : MonoBehaviour
         float textLeft = 24f;
         if (guidePortrait != null)
         {
-            RectTransform pf = Rect("Portrait", box, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(62, 0), new Vector2(88, 88));
-            Image pfBg = pf.gameObject.AddComponent<Image>();
-            pfBg.color = new Color(0.2f, 0.14f, 0.45f); pfBg.raycastTarget = false;
-            RectTransform pi = Rect("Face", pf, Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-8, -8));
+            RectTransform pf = Rect("Portrait", box, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(72, 0), new Vector2(112, 112));
+            // (sin cuadro de fondo: solo el dibujo de Mei Mei)
+            RectTransform pi = Rect("Face", pf, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             faceRt = pi;
             face = pi.gameObject.AddComponent<Image>();
             face.sprite = guidePortrait; face.preserveAspect = true; face.raycastTarget = false;
-            textLeft = 122f;
+            textLeft = 146f;
         }
 
         // Etiqueta con el nombre, sobre la caja
-        RectTransform tag = Rect("Name", box, new Vector2(0, 1), new Vector2(0, 1), new Vector2(textLeft + 90, 4), new Vector2(200, 26));
+        RectTransform tag = Rect("Name", box, new Vector2(0, 1), new Vector2(0, 1), new Vector2(textLeft + 100, 6), new Vector2(200, 34));
         Image tagBg = tag.gameObject.AddComponent<Image>();
         tagBg.color = gold; tagBg.raycastTarget = false;
-        Label(tag, guideName, 11, ink);
+        Label(tag, guideName, 20, ink);
 
         RectTransform tr = Rect("Text", box, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-        tr.offsetMin = new Vector2(textLeft, 16); tr.offsetMax = new Vector2(-28, -24);
+        tr.offsetMin = new Vector2(textLeft, 18); tr.offsetMax = new Vector2(-30, -28);
         dialog = tr.gameObject.AddComponent<Text>();
-        dialog.font = font; dialog.fontSize = 14; dialog.color = cream; dialog.lineSpacing = 1.6f;
+        dialog.font = font; dialog.fontSize = 18; dialog.color = cream; dialog.lineSpacing = 1.5f;
         dialog.alignment = TextAnchor.UpperLeft; dialog.raycastTarget = false;
         dialog.horizontalOverflow = HorizontalWrapMode.Wrap;
 
@@ -502,13 +499,13 @@ public class Tutorial : MonoBehaviour
         nextMark.anchoredPosition = new Vector2(-24, 20);
 
         // Boton SALTAR (abajo a la izquierda)
-        RectTransform btn = Rect("Skip", root, Vector2.zero, Vector2.zero, new Vector2(124, 44), new Vector2(200, 42));
+        RectTransform btn = Rect("Skip", root, Vector2.zero, Vector2.zero, new Vector2(134, 48), new Vector2(220, 48));
         Image bi = btn.gameObject.AddComponent<Image>();
         bi.color = new Color(0.25f, 0.18f, 0.55f, 0.9f);
         Button b = btn.gameObject.AddComponent<Button>();
         b.targetGraphic = bi;
         b.onClick.AddListener(Skip);
-        Label(btn, "SALTAR >>", 14, keyColor);
+        Label(btn, "SALTAR >>", 16, keyColor);
 
         // Negro para los fundidos
         fade = Rect("Fade", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero).gameObject.AddComponent<Image>();

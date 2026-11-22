@@ -1,11 +1,5 @@
 using UnityEngine;
 
-// Ponlo en PlayerVisual. Cambia los dibujos del gato segun lo que pasa:
-//   quieto   -> frente (gatop1...gatop9)
-//   moviendo -> volar  (gato1, gato2, gato3)
-//   herido   -> morido (gatomuro, gatomuro1, gatomuro2) mientras parpadea
-//   muerto   -> gatomuro3 (y luego GameFeedback lo hace caer hacia la luna)
-// Reemplaza al Animator (se apaga solo).
 [RequireComponent(typeof(SpriteRenderer))]
 public class CatAnimator : MonoBehaviour
 {
@@ -33,10 +27,8 @@ public class CatAnimator : MonoBehaviour
         if (a != null) a.enabled = false;
     }
 
-    // Lo llama GameFeedback al equivocarte
     public void PlayHurt(float seconds) { hurtUntil = Time.unscaledTime + seconds; }
 
-    // Lo llama GameFeedback al perder
     public void SetDead()
     {
         dead = true;

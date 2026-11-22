@@ -2,11 +2,6 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-// El jefe dispara al ritmo REAL de la cancion (SongChart):
-//   bombo en el primer tiempo -> anillo
-//   otros golpes de bombo     -> rafaga en espiral (tranquila: una bala hacia ti)
-//   caja (tiempos 2 y 4)      -> abanico hacia el gato
-// En la intro no dispara; en las partes intensas las balas van mas rapido.
 public class BossAttack : MonoBehaviour
 {
     [Header("Referencias")]
@@ -156,7 +151,7 @@ public class BossAttack : MonoBehaviour
         if (player == null) return;
         float a = AngleToPlayer();
         int ways = R(fanBullets);
-        NoteType note = PickNote(); // todo el abanico es la misma nota
+        NoteType note = PickNote(); 
         for (int i = 0; i < ways; i++) Spawn(a + (i - (ways - 1) / 2f) * fanSpread, speed, note);
     }
 

@@ -3,15 +3,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-// Ponlo en un objeto vacio "Feedback". Hace que cada accion se sienta:
-//  - Nota correcta: anillo de su color + nombre de la nota
-//  - Error: anillo rojo y el gato parpadea (no pierde otra vida mientras)
-//  - Parry: onda cyan; a ritmo, onda dorada + "¡A RITMO!"
-//  - Nota devuelta al jefe: "+2 s" sobre el jefe
-//  - Ronda completada: borra todas las balas, la musica se frena como cinta, distorsion,
-//    el jefe vuela erratico sin disparar y luego todo vuelve al ritmo
-//  - Te dan: distorsion de imagen y sonido
-//  - Nota correcta: la nota vuela hacia el jefe y el jefe se sacude
 public class GameFeedback : MonoBehaviour
 {
     [Header("Referencias")]

@@ -3,12 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-// Ponlo en el Canvas. Construye todo el HUD de la pelea (como el mockup "Nivel Luna"):
-//  - Izquierda: partitura del jefe que se rompe (sin recuadro)
-//  - Centro: fila JEFE (notas que desafina) y fila TU (lo que llevas); la siguiente late con el beat
-//  - Derecha: ronda y barra de desafinacion
-//  - Abajo izquierda: pescados
-//  - Pantalla de victoria / game over con boton Reintentar
+
 public class FightUI : MonoBehaviour
 {
     [Header("Referencias")]
@@ -17,11 +12,11 @@ public class FightUI : MonoBehaviour
     [SerializeField] BeatClock beatClock;
 
     [Header("Sprites")]
-    [SerializeField] Sprite fishFull;           // pez
-    [SerializeField] Sprite fishLost;           // hueso
-    [SerializeField] Sprite[] bossStaffStates;  // parti1 ... parti5 (entera -> rota)
-    [SerializeField] Sprite winBackground;      // final (opcional)
-    [SerializeField] Sprite loseCat;            // gatotriste (pantalla de derrota)
+    [SerializeField] Sprite fishFull;           
+    [SerializeField] Sprite fishLost;          
+    [SerializeField] Sprite[] bossStaffStates;  
+    [SerializeField] Sprite winBackground;      
+    [SerializeField] Sprite loseCat;            
 
     [Header("Colores")]
     [SerializeField] Color barLow = new Color(0.36f, 0.89f, 0.42f);
@@ -31,32 +26,33 @@ public class FightUI : MonoBehaviour
     [SerializeField] Color panelColor = new Color(0.05f, 0.03f, 0.15f, 0.72f);
     [SerializeField] Color nextColor = new Color(1f, 0.88f, 0.30f);
 
-    [Header("Filas JEFE / TU")]
-    [SerializeField, Tooltip("Siguen funcionando por dentro; solo se dejan de dibujar")] bool showScoreRows = false;
+    [Header("Posiciones (puedes moverlas aqui, incluso con el juego en Play)")]
+    [SerializeField, Tooltip("Centro de la partitura, medido desde la esquina SUPERIOR IZQUIERDA")] Vector2 staffPos = new Vector2(180, -118);
+    [SerializeField] Vector2 staffSize = new Vector2(310, 118);
+    [SerializeField] bool showStaffLabel = true;
+    [SerializeField, Tooltip("Panel de ronda y barra, medido desde la esquina SUPERIOR DERECHA")] Vector2 roundPanelPos = new Vector2(-24, -36);
+    [SerializeField] Vector2 roundPanelSize = new Vector2(300, 140);
+    [SerializeField, Tooltip("Panel de peces, medido desde la esquina INFERIOR DERECHA")] Vector2 fishPanelPos = new Vector2(-24, 30);
+    [SerializeField] float fishSize = 66f;
 
     [Header("Ayuda")]
     [SerializeField, Tooltip("Hace brillar las balas de la nota que necesitas y la muestra en la casilla que sigue")]
     bool showNeededNote = true;
 
-    const float SlotSize = 40f, SlotGap = 8f, IconSize = 28f;
 
-    // Elementos construidos
+   
     Image staff;
     Text roundText;
     RectTransform barFill;
     Image barFillImg;
     Image[] fish;
-    RectTransform bossRow, playerRow;
-    readonly List<Image> bossSlots = new List<Image>();
-    readonly List<Image> playerSlots = new List<Image>();
-    readonly List<Image> playerIcons = new List<Image>();
     GameObject endPanel;
     Text endTitle, endSub;
     Image endCat;
     RectTransform endTitleRt, endBtnRt;
     Image endBg;
 
-    // Efectos de la partitura
+
     RectTransform staffRt, hudRoot;
     Vector2 staffHome;
     float staffShake, staffFlash, staffPunch;
@@ -66,7 +62,7 @@ public class FightUI : MonoBehaviour
     static readonly Color shardColor = new Color(0.9f, 0.88f, 0.97f);
     int shownLives = -1;
     Font font, retroFont;
-    RectTransform scorePanel, fishPanel;
+    RectTransform fishPanel, staffLabelRt, roundPanelRt;
     Image dim;
     Text banner, healText;
     Vector2 staffAnimPos;
@@ -116,11 +112,35 @@ public class FightUI : MonoBehaviour
         if (beatClock != null) beatClock.OnBeat -= OnBeat;
     }
 
-    void Start() { RebuildRows(); RefreshLives(); }
+    // Pone cada pieza del HUD donde dicen los campos de "Posiciones"
+    void ApplyLayout()
+    {
+        if (!staffBusy)
+        {
+            staffHome = staffPos;
+            staffRt.sizeDelta = staffSize;
+        }
+        staffLabelRt.gameObject.SetActive(showStaffLabel);
+        staffLabelRt.anchoredPosition = staffPos + new Vector2(-staffSize.x / 2f, staffSize.y / 2f + 26f);
+
+        roundPanelRt.anchoredPosition = roundPanelPos;
+        roundPanelRt.sizeDelta = roundPanelSize;
+
+        const float gap = 10f, pad = 12f;
+        fishPanel.anchoredPosition = fishPanelPos;
+        fishPanel.sizeDelta = new Vector2(pad * 2 + fishSize * 3 + gap * 2, fishSize + pad);
+        for (int i = 0; i < fish.Length; i++)
+        {
+            RectTransform f = fish[i].rectTransform;
+            f.sizeDelta = new Vector2(fishSize, fishSize);
+            f.anchoredPosition = new Vector2(pad + fishSize / 2 + i * (fishSize + gap), 0);
+        }
+    }
+
+    void Start() { ApplyLayout(); RebuildRows(); RefreshLives(); }
 
     void Update()
     {
-        // Barra: se llena mientras se acaba el tiempo
         if (fight.TimeMax > 0f)
         {
             float t = 1f - Mathf.Clamp01(fight.TimeLeft / fight.TimeMax);
@@ -128,6 +148,7 @@ public class FightUI : MonoBehaviour
             barFillImg.color = Color.Lerp(barLow, barHigh, t);
         }
 
+        if (Application.isEditor) ApplyLayout(); // para acomodar en vivo desde el Inspector
         UpdateStaffFx();
         UpdateTexts();
 
@@ -139,61 +160,23 @@ public class FightUI : MonoBehaviour
 
     void OnBeat(int beat) { }
 
-    // ---------- Filas de la partitura ----------
+    // ---------- Ronda y nota que necesitas ----------
 
+    // Al empezar cada ronda: actualiza "RONDA X/3"
     void RebuildRows()
     {
-        foreach (Image i in bossSlots) Destroy(i.gameObject);
-        foreach (Image i in playerSlots) Destroy(i.gameObject);
-        bossSlots.Clear(); playerSlots.Clear(); playerIcons.Clear();
-
-        int n = score.BossScore.Count;
-        for (int i = 0; i < n; i++)
-        {
-            Image b = Slot(bossRow, i, out Image bIcon);
-            NoteType note = score.BossScore[i];
-            bIcon.sprite = NoteStyle.GetSprite(note);
-            bIcon.color = NoteStyle.GetColor(note);
-            bossSlots.Add(b);
-
-            Image p = Slot(playerRow, i, out Image pIcon);
-            playerSlots.Add(p);
-            playerIcons.Add(pIcon);
-        }
         roundText.text = "RONDA " + (score.Round + 1) + "/" + score.TotalRounds;
-
-        // El panel se ajusta al numero de notas y queda centrado
-        float rowWidth = n * SlotSize + (n - 1) * SlotGap;
-        scorePanel.sizeDelta = new Vector2(18 + 70 + rowWidth + 18, scorePanel.sizeDelta.y);
         RefreshRows();
     }
 
+    // Cada vez que avanzas: le dice a las balas cual nota debe brillar
     void RefreshRows()
     {
-        for (int i = 0; i < playerSlots.Count; i++)
-        {
-            bool done = i < score.Progress;
-            bool next = i == score.Progress && score.HasExpected;
-            Image icon = playerIcons[i];
-            icon.enabled = done || (next && showNeededNote);
-            if (icon.enabled)
-            {
-                NoteType note = score.OppositeOf(score.BossScore[i]);
-                icon.sprite = NoteStyle.GetSprite(note);
-                Color c = NoteStyle.GetColor(note);
-                if (!done) c.a = 0.6f; // la que sigue: se ve "fantasma"
-                icon.color = c;
-            }
-            playerSlots[i].color = next ? new Color(nextColor.r, nextColor.g, nextColor.b, 0.45f)
-                                 : done ? new Color(0.42f, 1f, 0.54f, 0.22f)
-                                 : new Color(1f, 1f, 1f, 0.10f);
-        }
         NoteStyle.HighlightOn = showNeededNote;
         NoteStyle.SetNeeded(score.HasExpected, score.Expected);
         RefreshStaff();
     }
 
-    // El dibujo cambia por ronda: entera -> rota -> mas rota ... -> destruida al ganar
     int StaffIndex()
     {
         int last = bossStaffStates.Length - 1;
@@ -209,18 +192,6 @@ public class FightUI : MonoBehaviour
         if (idx != shownStaff && shownStaff >= 0) StaffCrack(18); // cambio de dibujo: se rompe un pedazo
         shownStaff = idx;
         staff.sprite = bossStaffStates[idx];
-    }
-
-    Image Slot(RectTransform row, int i, out Image icon)
-    {
-        RectTransform rt = Rect("Slot" + i, row, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(SlotSize / 2 + i * (SlotSize + SlotGap), 0), new Vector2(SlotSize, SlotSize));
-        Image bg = Img(rt, null, new Color(1f, 1f, 1f, 0.10f));
-        RectTransform it = Rect("Icon", rt, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            Vector2.zero, new Vector2(IconSize, IconSize));
-        icon = Img(it, null, Color.white);
-        icon.preserveAspect = true;
-        return bg;
     }
 
     // ---------- Vidas y final ----------
@@ -480,8 +451,8 @@ public class FightUI : MonoBehaviour
         Vector2 topLeft = new Vector2(0, 1), top = new Vector2(0.5f, 1), topRight = new Vector2(1, 1);
 
         // Izquierda: partitura del jefe, sin recuadro
-        Txt(Rect("StaffLabel", root, topLeft, topLeft, topLeft, new Vector2(Margin, -16), new Vector2(260, 22)),
-            "PARTITURA DEL JEFE", 15, TextAnchor.MiddleLeft, labelColor);
+        staffLabelRt = Txt(Rect("StaffLabel", root, topLeft, topLeft, topLeft, new Vector2(Margin, -16), new Vector2(260, 22)),
+            "PARTITURA DEL JEFE", 14, TextAnchor.MiddleLeft, labelColor).rectTransform;
         // Las imagenes de la partitura ya vienen recortadas (proporcion 2.63 : 1)
         hudRoot = root;
         staffRt = Rect("BossStaff", root, topLeft, topLeft, new Vector2(0.5f, 0.5f), new Vector2(Margin + 130, -92), new Vector2(260, 99));
@@ -489,26 +460,13 @@ public class FightUI : MonoBehaviour
         staff = Img(staffRt, null, Color.white);
         staff.preserveAspect = true;
 
-        // Centro: filas JEFE y TU
-        RectTransform center = Rect("ScorePanel", root, top, top, top, new Vector2(0, -14), new Vector2(482, 136));
-        scorePanel = center;
-        Img(center, null, panelColor);
-        RectTransform bossLine = Rect("BossLine", center, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -16), new Vector2(0, SlotSize));
-        Txt(Rect("Label", bossLine, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(18, 0), new Vector2(70, 0)),
-            "JEFE", 18, TextAnchor.MiddleLeft, new Color(1f, 0.62f, 0.69f));
-        bossRow = Rect("BossRow", bossLine, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(96, 0), new Vector2(-110, 0));
-        RectTransform playerLine = Rect("PlayerLine", center, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -16 - SlotSize - 16), new Vector2(0, SlotSize));
-        Txt(Rect("Label", playerLine, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(18, 0), new Vector2(70, 0)),
-            "TÚ", 18, TextAnchor.MiddleLeft, new Color(0.42f, 1f, 0.54f));
-        playerRow = Rect("PlayerRow", playerLine, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0.5f), new Vector2(96, 0), new Vector2(-110, 0));
-
         // Derecha: ronda y barra
-        RectTransform right = Rect("RoundPanel", root, topRight, topRight, topRight, new Vector2(-24, -14), new Vector2(260, 136));
+        RectTransform right = roundPanelRt = Rect("RoundPanel", root, topRight, topRight, topRight, new Vector2(-24, -14), new Vector2(260, 136));
         Img(right, null, panelColor);
         roundText = Txt(Rect("Round", right, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(-16, -8), new Vector2(-32, 42)),
-            "RONDA 1/3", 34, TextAnchor.MiddleRight, textColor);
+            "RONDA 1/3", 28, TextAnchor.MiddleRight, textColor);
         Txt(Rect("BarLabel", right, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -56), new Vector2(-32, 20)),
-            "DESAFINACIÓN", 14, TextAnchor.MiddleLeft, labelColor);
+            "DESAFINACIÓN", 13, TextAnchor.MiddleLeft, labelColor);
         RectTransform bar = Rect("Bar", right, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -80), new Vector2(-32, 18));
         Img(bar, null, new Color(0f, 0f, 0f, 0.55f));
         barFill = Rect("Fill", bar, Vector2.zero, new Vector2(0, 1), new Vector2(0, 0.5f), Vector2.zero, Vector2.zero);
@@ -564,7 +522,6 @@ public class FightUI : MonoBehaviour
             "REINTENTAR", 26, TextAnchor.MiddleCenter, textColor);
         endPanel = panel.gameObject;
         endPanel.SetActive(false);
-        scorePanel.gameObject.SetActive(showScoreRows);
     }
 
     RectTransform Rect(string name, Transform parent, Vector2 aMin, Vector2 aMax, Vector2 pivot, Vector2 pos, Vector2 size)
@@ -587,7 +544,8 @@ public class FightUI : MonoBehaviour
     Text Txt(RectTransform rt, string text, int size, TextAnchor align, Color color)
     {
         Text t = rt.gameObject.AddComponent<Text>();
-        t.font = font; t.text = text; t.fontSize = size; t.alignment = align;
+        t.font = retroFont != null ? retroFont : font; // fuente pixeleada en todo el HUD
+        t.text = text; t.fontSize = size; t.alignment = align;
         t.color = color; t.fontStyle = FontStyle.Bold; t.raycastTarget = false;
         t.horizontalOverflow = HorizontalWrapMode.Overflow;
         Outline o = rt.gameObject.AddComponent<Outline>();

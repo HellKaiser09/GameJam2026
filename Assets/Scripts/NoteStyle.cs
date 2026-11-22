@@ -1,8 +1,6 @@
 using UnityEngine;
 
-// Forma y color de cada nota. Los opuestos comparten forma:
-// Do/Fa circulo, Re/Mi triangulo, Sol/La cuadrado, Si/Do2 rombo.
-// Las formas se dibujan por codigo (blancas con borde oscuro), asi no dependen de importar imagenes.
+
 public static class NoteStyle
 {
     static readonly Color[] colors =

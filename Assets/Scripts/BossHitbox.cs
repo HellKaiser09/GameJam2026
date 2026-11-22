@@ -11,7 +11,7 @@ public class BossHitbox : MonoBehaviour
         Bullet bullet = other.GetComponent<Bullet>();
         if (bullet == null || !bullet.IsReflected) return;
 
-        fight.AddTime(bullet.ReflectedDamage); // segundos extra en la barra
+        fight.AddTime(bullet.ReflectedDamage); 
         Destroy(other.gameObject);
     }
 }

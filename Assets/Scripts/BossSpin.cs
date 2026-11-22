@@ -1,9 +1,4 @@
 using UnityEngine;
-
-// Ponlo en BossVisual. La nave mira al frente y solo gira:
-//  - cuando dispara el anillo (golpe fuerte de la musica)
-//  - mientras entra en la intro
-// Reemplaza al Animator (se apaga solo).
 [RequireComponent(typeof(SpriteRenderer))]
 public class BossSpin : MonoBehaviour
 {
@@ -11,7 +6,6 @@ public class BossSpin : MonoBehaviour
     Sprite[] frames;
     [SerializeField, Tooltip("Segundos por cuadro al girar")] float frameTime = 0.05f;
 
-    // RetroIntro lo prende mientras el jefe entra
     public bool Continuous { get; set; }
 
     SpriteRenderer sr;
@@ -26,7 +20,6 @@ public class BossSpin : MonoBehaviour
         if (frames != null && frames.Length > 0) sr.sprite = frames[0];
     }
 
-    // Da 'turns' vueltas completas y termina mirando al frente
     public void Spin(int turns = 1)
     {
         if (frames == null || frames.Length == 0) return;

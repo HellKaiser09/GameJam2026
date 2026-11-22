@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-// Vidas del gato (pescados) + barra de desafinacion (tiempo limite)
+
 public class FightManager : MonoBehaviour
 {
     [SerializeField] ScoreManager score;
@@ -26,7 +26,6 @@ public class FightManager : MonoBehaviour
     bool oneTimeHeal = true;
     public bool HealUsed { get; private set; }
 
-    // Mientras sea true la barra de desafinacion no corre (pausa entre rondas)
     public bool Paused { get; set; }
 
     void OnEnable()
@@ -55,7 +54,7 @@ public class FightManager : MonoBehaviour
 
     void Update()
     {
-        if (Over || Paused || RetroIntro.Playing || Tutorial.Active) return; // la barra no corre durante la intro
+        if (Over || Paused || RetroIntro.Playing || Tutorial.Active) return; 
 
         TimeLeft -= Time.deltaTime;
         if (TimeLeft <= 0f)
@@ -73,7 +72,6 @@ public class FightManager : MonoBehaviour
         TimeLeft = TimeMax;
     }
 
-    // Lo llama el jefe cuando le llega una nota devuelta con el parry
     public void AddTime(float seconds)
     {
         if (Over) return;
@@ -84,7 +82,7 @@ public class FightManager : MonoBehaviour
 
     void LoseLife()
     {
-        if (Over || Tutorial.Active) return; // en el tutorial no se pierden peces
+        if (Over || Tutorial.Active) return;
         Lives--;
         OnLivesChanged?.Invoke();
         Debug.Log("Vidas: " + Lives);
@@ -98,7 +96,6 @@ public class FightManager : MonoBehaviour
         }
     }
 
-    // Si te falta algun pez y no la has usado: +1 pez. Si estas completo, se guarda para despues.
     void TryHeal()
     {
         if (!oneTimeHeal || HealUsed || Over || Lives >= playerLives) return;
