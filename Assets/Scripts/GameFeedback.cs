@@ -157,7 +157,7 @@ public class GameFeedback : MonoBehaviour
         else { chroma.intensity.value = 0f; lens.intensity.value = 0f; }
 
         // Barra de desafinacion casi llena: la camara tiembla cada vez mas
-        if (!fight.Over && !fight.Paused && !RetroIntro.Playing && fight.TimeMax > 0f)
+        if (!fight.Over && !fight.Paused && !PauseMenu.Paused && !RetroIntro.Playing && fight.TimeMax > 0f)
         {
             float fill = 1f - fight.TimeLeft / fight.TimeMax;
             float k = Mathf.Clamp01((fill - tensionStart) / (1f - tensionStart));
@@ -239,7 +239,12 @@ public class GameFeedback : MonoBehaviour
         glitch = Mathf.Max(glitch, hitGlitch);
         beatClock.Distort(0.75f, 0.45f);
         Ring(player.position, red, 0.3f, 2f, 0.4f);
-        if (playerVisual != null) StartCoroutine(Blink(score.MistakeGrace));
+        if (playerVisual != null && !fight.Over)
+        {
+            blinkCo = StartCoroutine(Blink(score.MistakeGrace));
+            CatAnimator ca = playerVisual.GetComponent<CatAnimator>();
+            if (ca != null) ca.PlayHurt(score.MistakeGrace); // dibujo de "herido"
+        }
     }
 
     // Cada disparo cae en un golpe de la cancion: el jefe lo "toca" con un fogonazo
@@ -287,7 +292,7 @@ public class GameFeedback : MonoBehaviour
     {
         // Limpia la pantalla, como en Touhou al vencer una fase
         int rings = 0;
-        foreach (Bullet b in FindObjectsByType<Bullet>(FindObjectsSortMode.None))
+        foreach (Bullet b in FindObjectsByType<Bullet>())
         {
             if (rings++ < 40) Ring(b.transform.position, Color.white, 0.1f, 0.6f, 0.25f);
             Destroy(b.gameObject);
@@ -309,7 +314,8 @@ public class GameFeedback : MonoBehaviour
     {
         fight.Paused = true;
         float t = 0f;
-        while (t < roundBreakSeconds) { t += Time.unscaledDeltaTime; yield return null; }
+        while (t < roundBreakSeconds) { if (!PauseMenu.Paused) t += Time.unscaledDeltaTime; yield return null; }
+        while (PauseMenu.Paused) yield return null;
         fight.Paused = false;
         if (!fight.Over) beatClock.Resume();
     }
@@ -317,6 +323,7 @@ public class GameFeedback : MonoBehaviour
     // ---------- Victoria: la nave cae ----------
 
     float winShake;
+    Coroutine blinkCo;
 
     void Win()
     {
@@ -398,6 +405,61 @@ public class GameFeedback : MonoBehaviour
     {
         glitch = roundGlitch;
         beatClock.TapeBreak();
+        if (player != null) StartCoroutine(CatFalls());
+    }
+
+    // Derrota: el gato queda "muerto" (gatomuro3) un instante y cae girando hacia la luna,
+    // haciendose chiquito como si se alejara
+    IEnumerator CatFalls()
+    {
+        if (blinkCo != null) StopCoroutine(blinkCo);
+        // Esconde todo lo que no sea el dibujo del gato (punto, anillo de parry, barra de foco)
+        foreach (SpriteRenderer r in player.GetComponentsInChildren<SpriteRenderer>())
+            if (r != playerVisual) r.enabled = false;
+        if (playerVisual != null)
+        {
+            playerVisual.enabled = true;
+            CatAnimator ca = playerVisual.GetComponent<CatAnimator>();
+            if (ca != null) ca.SetDead();
+        }
+
+        Vector3 start = player.position;
+        Vector3 baseScale = player.localScale;
+        Ring(start, red, 0.3f, 2.5f, 0.4f);
+
+        // 1) Se queda congelado con cara de muerto, temblando un poquito
+        float t = 0f;
+        while (t < 0.7f)
+        {
+            t += Time.unscaledDeltaTime;
+            if (playerVisual != null) playerVisual.enabled = true;
+            player.position = start + (Vector3)(Random.insideUnitCircle * 0.03f);
+            yield return null;
+        }
+
+        // 2) Cae hacia la luna: gira cada vez mas rapido y se hace chiquito
+        Vector3 target = new Vector3(start.x * 0.5f, -1.6f, 0f);
+        float time = 1.7f, angle = 0f;
+        t = 0f;
+        while (t < time)
+        {
+            float dt = Time.unscaledDeltaTime;
+            t += dt;
+            float k = Mathf.Clamp01(t / time);
+            float ease = k * k;                                  // empieza lento y acelera
+            player.position = Vector3.Lerp(start, target, 1f - (1f - k) * (1f - k));
+            angle += Mathf.Lerp(90f, 900f, k) * dt;              // gira cada vez mas rapido
+            player.rotation = Quaternion.Euler(0, 0, angle);
+            player.localScale = baseScale * Mathf.Lerp(1f, 0.02f, ease);
+            if (playerVisual != null)
+                playerVisual.color = Color.Lerp(Color.white, new Color(0.55f, 0.45f, 0.9f, 0.7f), k);
+            yield return null;
+        }
+
+        // 3) Se pierde en la luna: un destellito
+        if (playerVisual != null) playerVisual.enabled = false;
+        Ring(target, new Color(0.85f, 0.8f, 1f, 0.9f), 0.05f, 0.8f, 0.45f);
+        Ring(target, Color.white, 0.05f, 0.4f, 0.3f);
     }
 
     // ---------- Herramientas ----------

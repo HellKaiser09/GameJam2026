@@ -41,7 +41,7 @@ public class PlayerParry : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(parryKey)) TryParry();
+        if (Input.GetKeyDown(parryKey) && !PauseMenu.Paused) TryParry();
         UpdateIndicator();
     }
 

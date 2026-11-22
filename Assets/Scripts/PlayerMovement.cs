@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     public static Vector2 Position { get; private set; }
     public static bool Focusing { get; private set; }
     public static bool Exists { get; private set; }
+    public static bool Moving { get; private set; }
 
     Rigidbody2D rb;
     Vector2 input;
@@ -72,6 +73,7 @@ public class PlayerMovement : MonoBehaviour
         // Como en Touhou: el punto de la hitbox solo se ve con foco (no cambia de tamano)
         if (hitboxDot != null) hitboxDot.SetActive(focusing);
         Focusing = focusing;
+        Moving = input.sqrMagnitude > 0.01f;
         Position = rb.position;
         FocusBlend = Mathf.MoveTowards(FocusBlend, focusing ? 1f : 0f, Time.unscaledDeltaTime * 5f);
         BulletSpeed = Mathf.Lerp(1f, focusBulletSpeed, FocusBlend);

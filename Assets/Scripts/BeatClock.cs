@@ -200,6 +200,17 @@ public class BeatClock : MonoBehaviour
         breaking = false;
     }
 
+    // Pausa inmediata (menu de pausa); Resume() la continua en sincronia
+    public void PauseNow()
+    {
+        if (frozen) return;
+        frozen = true;
+        frozenSongTime = SongTimeNow();
+        StopAllCoroutines();
+        source.pitch = 1f;
+        source.Pause();
+    }
+
     // Vuelve a tocar desde donde se quedo y re-sincroniza el reloj con el audio
     public void Resume()
     {

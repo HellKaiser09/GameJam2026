@@ -21,6 +21,7 @@ public class FightUI : MonoBehaviour
     [SerializeField] Sprite fishLost;           // hueso
     [SerializeField] Sprite[] bossStaffStates;  // parti1 ... parti5 (entera -> rota)
     [SerializeField] Sprite winBackground;      // final (opcional)
+    [SerializeField] Sprite loseCat;            // gatotriste (pantalla de derrota)
 
     [Header("Colores")]
     [SerializeField] Color barLow = new Color(0.36f, 0.89f, 0.42f);
@@ -48,6 +49,8 @@ public class FightUI : MonoBehaviour
     readonly List<Image> playerIcons = new List<Image>();
     GameObject endPanel;
     Text endTitle, endSub;
+    Image endCat;
+    RectTransform endTitleRt, endBtnRt;
     Image endBg;
 
     // Efectos de la partitura
@@ -292,13 +295,30 @@ public class FightUI : MonoBehaviour
         if (winBackground != null) { endBg.sprite = winBackground; endBg.color = Color.white; }
     }
 
-    void ShowLose()
+    void ShowLose() { StartCoroutine(LoseAfterFall()); }
+
+    System.Collections.IEnumerator LoseAfterFall()
+    {
+        float t = 0f;
+        while (t < 2.6f) { t += Time.unscaledDeltaTime; yield return null; } // el gato cae (GameFeedback)
+        ShowLoseNow();
+    }
+
+    void ShowLoseNow()
     {
         endPanel.SetActive(true);
         endTitle.font = retroFont;
         endTitle.fontSize = 48;
         endTitle.text = "DESAFINADO...";
         endSub.text = "";
+        // Gato triste en medio: titulo arriba, gato, boton abajo
+        if (loseCat != null)
+        {
+            endCat.sprite = loseCat;
+            endCat.gameObject.SetActive(true);
+            endTitleRt.anchoredPosition = new Vector2(0, 220);
+            endBtnRt.anchoredPosition = new Vector2(0, -210);
+        }
     }
 
     void Restart()
@@ -523,10 +543,15 @@ public class FightUI : MonoBehaviour
         endBg = Img(panel, null, new Color(0.03f, 0.02f, 0.08f, 0.85f));
         endTitle = Txt(Rect("Title", panel, new Vector2(0, 0.5f), new Vector2(1, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 60), new Vector2(0, 100)),
             "", 72, TextAnchor.MiddleCenter, textColor);
+        endTitleRt = endTitle.rectTransform;
+        endCat = Img(Rect("SadCat", panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 10), new Vector2(260, 255)), null, Color.white);
+        endCat.preserveAspect = true;
+        endCat.gameObject.SetActive(false);
         endSub = Txt(Rect("Sub", panel, new Vector2(0, 0.5f), new Vector2(1, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 30)),
             "", 16, TextAnchor.MiddleCenter, labelColor);
         endSub.font = retroFont;
         RectTransform btn = Rect("Retry", panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -60), new Vector2(240, 60));
+        endBtnRt = btn;
         Image btnImg = Img(btn, null, new Color(0.35f, 0.25f, 0.7f));
         btnImg.raycastTarget = true; // para que el boton se pueda clicar
         Button b = btn.gameObject.AddComponent<Button>();
