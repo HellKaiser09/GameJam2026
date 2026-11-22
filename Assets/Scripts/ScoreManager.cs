@@ -16,11 +16,15 @@ public class ScoreManager : MonoBehaviour
 
     [Header("Al equivocarte")]
     [SerializeField] bool resetOnMistake = false;
+    [SerializeField, Tooltip("Segundos sin perder otra vida despues de un error")] float mistakeGrace = 1.5f;
 
     readonly List<NoteType> bossScore = new List<NoteType>();
     int progress;
     int round;
     bool finished;
+    float graceUntil;
+    public bool Invulnerable => Time.time < graceUntil;
+    public float MistakeGrace => mistakeGrace;
 
     public IReadOnlyList<NoteType> BossScore => bossScore;
     public int Progress => progress;
@@ -28,12 +32,16 @@ public class ScoreManager : MonoBehaviour
     public int TotalRounds => notesPerRound.Length;
     public int PoolSize => notesPerRound[round];
     public bool Finished => finished;
-    public NoteType Expected => opposites[(int)bossScore[progress]];
+    // true mientras falte alguna nota en la ronda actual
+    public bool HasExpected => !finished && progress < bossScore.Count;
+    // Nunca se sale de la lista (aunque la ronda se acabe de completar)
+    public NoteType Expected => opposites[(int)bossScore[Mathf.Min(progress, bossScore.Count - 1)]];
     public NoteType OppositeOf(NoteType n) { return opposites[(int)n]; }
 
     public event Action OnProgressChanged;
     public event Action OnRoundStarted;
     public event Action OnMistake;
+    public event Action<NoteType> OnCorrect;  // atrapaste la nota correcta
     public event Action OnCompleted;          // al terminar una ronda
     public event Action OnAllRoundsCompleted; // al terminar la última
 
@@ -68,6 +76,7 @@ public class ScoreManager : MonoBehaviour
         if (note == Expected)
         {
             progress++;
+            OnCorrect?.Invoke(note);
             OnProgressChanged?.Invoke();
 
             if (progress >= bossScore.Count)
@@ -86,7 +95,9 @@ public class ScoreManager : MonoBehaviour
         }
         else
         {
+            if (Invulnerable) return; // acabas de perder una vida: no te quita otra
             Debug.Log("Nota equivocada: " + note);
+            graceUntil = Time.time + mistakeGrace;
             OnMistake?.Invoke();
             if (resetOnMistake)
             {

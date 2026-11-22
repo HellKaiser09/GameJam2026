@@ -1,5 +1,12 @@
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
+// El jefe dispara al ritmo REAL de la cancion (SongChart):
+//   bombo en el primer tiempo -> anillo
+//   otros golpes de bombo     -> rafaga en espiral (tranquila: una bala hacia ti)
+//   caja (tiempos 2 y 4)      -> abanico hacia el gato
+// En la intro no dispara; en las partes intensas las balas van mas rapido.
 public class BossAttack : MonoBehaviour
 {
     [Header("Referencias")]
@@ -10,59 +17,153 @@ public class BossAttack : MonoBehaviour
     [SerializeField] Transform player;
 
     [Header("Notas")]
-    [SerializeField, Range(0f, 1f)] float expectedChance = 0.3f;
+    [SerializeField, Range(0f, 1f)] float neededChance = 0.2f;
 
     [Header("Por ronda (1, 2, 3)")]
-    [SerializeField] int[] beatsPerCircle = { 2, 2, 1 };
-    [SerializeField] float[] circleSpeed = { 3f, 3.5f, 4f };
-    [SerializeField] float[] burstSpeed = { 5f, 6f, 7f };
+    [SerializeField] int[] ringBullets = { 12, 16, 20 };
+    [SerializeField] int[] spiralBullets = { 2, 3, 4 };
+    [SerializeField] int[] fanBullets = { 3, 5, 7 };
+    [SerializeField] float[] roundSpeed = { 2.6f, 3f, 3.4f };
 
-    [Header("Circulo y rafaga")]
-    [SerializeField] int circleCount = 12;
-    [SerializeField] float burstSpread = 10f;
+    [Header("Velocidad segun la musica")]
+    [SerializeField] float calmSpeed = 0.9f;
+    [SerializeField] float intenseSpeed = 1.25f;
+    [SerializeField] float fanExtraSpeed = 1.6f;
+    [SerializeField] float fanSpread = 12f;
+    [SerializeField] float spiralTurn = 17f;
 
-    void OnEnable() { beatClock.OnBeat += HandleBeat; }
-    void OnDisable() { beatClock.OnBeat -= HandleBeat; }
+    [Header("Movimiento del jefe")]
+    [SerializeField] float swayAmplitude = 2.5f;
+    [SerializeField, Tooltip("Beats que tarda en ir y volver")] float swayBeats = 16f;
 
-    int R(int[] a) { return a[Mathf.Min(score.Round, a.Length - 1)]; }
-    float R(float[] a) { return a[Mathf.Min(score.Round, a.Length - 1)]; }
+    // 0 = anillo (bombo fuerte), 1 = bombo, 2 = caja (abanico)
+    public event Action<int> OnShot;
 
-    void HandleBeat(int beat)
+    Vector3 basePos;
+    float ringOffset, spiralAngle;
+    float swayTime; // empieza a contar al terminar la intro, asi no da un salto
+
+    // Vuelo erratico (entre rondas): no dispara y se mueve como mareado
+    float staggerUntil = -1f, recover;
+    Vector3 lastErratic;
+    BossSpin spin;
+    public bool Staggering => Time.time < staggerUntil;
+
+    public void Stagger(float seconds)
     {
-        if (score.Finished || fight.Over) return;
+        staggerUntil = Time.time + seconds;
+        if (spin != null) spin.Continuous = true;
+    }
 
-        if (beat % R(beatsPerCircle) == 0) FireCircle();
-        if (beat % 4 == 3) FireBurst();
+    void OnEnable() { beatClock.OnStep += HandleStep; }
+    void OnDisable() { beatClock.OnStep -= HandleStep; }
+
+    void Start()
+    {
+        basePos = transform.position;
+        spin = GetComponentInChildren<BossSpin>();
+    }
+
+    int R(int[] a) { return a[Mathf.Clamp(score.Round, 0, a.Length - 1)]; }
+    float R(float[] a) { return a[Mathf.Clamp(score.Round, 0, a.Length - 1)]; }
+    bool Stopped => score.Finished || fight.Over;
+
+    void Update()
+    {
+        if (RetroIntro.Playing) return; // en la intro, RetroIntro mueve al jefe
+
+        if (Staggering)
+        {
+            float t = Time.time * 1.8f;
+            Vector3 e = basePos + new Vector3((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 9f,
+                                              (Mathf.PerlinNoise(0.7f, t * 1.3f) - 0.5f) * 2.8f, 0f);
+            e += (Vector3)(Random.insideUnitCircle * 0.08f);
+            transform.position = e;
+            lastErratic = e;
+            recover = 1f;
+            return;
+        }
+        if (spin != null && recover >= 1f) spin.Continuous = false;
+        if (Stopped) return;
+
+        float period = Mathf.Max(0.1f, swayBeats * beatClock.BeatLength);
+        Vector3 p = basePos;
+        swayTime += Time.deltaTime;
+        p.x += Mathf.Sin(swayTime * Mathf.PI * 2f / period) * swayAmplitude;
+        // Al terminar el vuelo erratico regresa suave a su vaiven
+        recover = Mathf.MoveTowards(recover, 0f, Time.deltaTime * 1.5f);
+        transform.position = Vector3.Lerp(p, lastErratic, recover * recover);
+    }
+
+    void HandleStep(int step)
+    {
+        if (Stopped || RetroIntro.Playing || Staggering) return;
+        int bar = step / SongChart.StepsPerBar;
+        int s = step % SongChart.StepsPerBar;
+        int level = SongChart.Level(bar);
+        if (level == 0) return; // intro: el jefe espera
+
+        float speed = R(roundSpeed) * (level == 2 ? intenseSpeed : calmSpeed);
+
+        if (SongChart.Snare(bar, s)) { FireFan(speed * fanExtraSpeed); OnShot?.Invoke(2); }
+
+        if (SongChart.Kick(bar, s))
+        {
+            if (s == 0) { FireRing(speed); OnShot?.Invoke(0); }
+            else
+            {
+                if (level == 2) FireSpiral(speed); else FireAimed(speed * fanExtraSpeed);
+                OnShot?.Invoke(1);
+            }
+        }
     }
 
     NoteType PickNote()
     {
-        return Random.value < expectedChance
+        return (score.HasExpected && Random.value < neededChance)
             ? score.Expected
             : (NoteType)Random.Range(0, score.PoolSize);
     }
 
-    void FireCircle()
+    void FireRing(float speed)
     {
-        for (int i = 0; i < circleCount; i++)
-        {
-            float angle = i * 360f / circleCount * Mathf.Deg2Rad;
-            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            Spawn(dir, R(circleSpeed), PickNote());
-        }
+        int n = R(ringBullets);
+        for (int i = 0; i < n; i++) Spawn(ringOffset + i * 360f / n, speed, PickNote());
+        ringOffset += 360f / n / 2f;
     }
 
-    void FireBurst()
+    void FireSpiral(float speed)
     {
-        NoteType note = PickNote();
-        Vector2 toPlayer = (player.position - transform.position).normalized;
-        for (int i = -1; i <= 1; i++)
-            Spawn(Quaternion.Euler(0, 0, i * burstSpread) * toPlayer, R(burstSpeed), note);
+        int n = R(spiralBullets);
+        for (int i = 0; i < n; i++) Spawn(spiralAngle + i * 360f / n, speed, PickNote());
+        spiralAngle += spiralTurn;
     }
 
-    void Spawn(Vector2 dir, float speed, NoteType note)
+    float AngleToPlayer()
     {
+        Vector2 to = player.position - transform.position;
+        return Mathf.Atan2(to.y, to.x) * Mathf.Rad2Deg;
+    }
+
+    void FireAimed(float speed)
+    {
+        if (player == null) return;
+        Spawn(AngleToPlayer(), speed, PickNote());
+    }
+
+    void FireFan(float speed)
+    {
+        if (player == null) return;
+        float a = AngleToPlayer();
+        int ways = R(fanBullets);
+        NoteType note = PickNote(); // todo el abanico es la misma nota
+        for (int i = 0; i < ways; i++) Spawn(a + (i - (ways - 1) / 2f) * fanSpread, speed, note);
+    }
+
+    void Spawn(float angleDeg, float speed, NoteType note)
+    {
+        float r = angleDeg * Mathf.Deg2Rad;
         Bullet b = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
-        b.Launch(dir, speed, note);
+        b.Launch(new Vector2(Mathf.Cos(r), Mathf.Sin(r)), speed, note);
     }
 }

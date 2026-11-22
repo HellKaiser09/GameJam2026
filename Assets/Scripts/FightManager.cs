@@ -18,12 +18,23 @@ public class FightManager : MonoBehaviour
     public event Action OnLivesChanged;
     public event Action OnGameOver;
     public event Action OnWin;
+    public event Action<float> OnTimeAdded;
+    public event Action OnHealed;          // la curacion unica se uso
+
+    [Header("Curacion unica (Irrepetible)")]
+    [SerializeField, Tooltip("Al pasar de ronda recuperas 1 pez, pero solo UNA vez en toda la partida")]
+    bool oneTimeHeal = true;
+    public bool HealUsed { get; private set; }
+
+    // Mientras sea true la barra de desafinacion no corre (pausa entre rondas)
+    public bool Paused { get; set; }
 
     void OnEnable()
     {
         score.OnMistake += LoseLife;
         score.OnRoundStarted += ResetTimer;
         score.OnAllRoundsCompleted += Win;
+        score.OnCompleted += TryHeal;
     }
 
     void OnDisable()
@@ -31,6 +42,7 @@ public class FightManager : MonoBehaviour
         score.OnMistake -= LoseLife;
         score.OnRoundStarted -= ResetTimer;
         score.OnAllRoundsCompleted -= Win;
+        score.OnCompleted -= TryHeal;
     }
 
     void Start()
@@ -43,7 +55,7 @@ public class FightManager : MonoBehaviour
 
     void Update()
     {
-        if (Over) return;
+        if (Over || Paused || RetroIntro.Playing) return; // la barra no corre durante la intro
 
         TimeLeft -= Time.deltaTime;
         if (TimeLeft <= 0f)
@@ -66,6 +78,7 @@ public class FightManager : MonoBehaviour
     {
         if (Over) return;
         TimeLeft = Mathf.Min(TimeMax, TimeLeft + seconds);
+        OnTimeAdded?.Invoke(seconds);
         Debug.Log("+" + seconds + " s | tiempo: " + TimeLeft.ToString("0.0"));
     }
 
@@ -83,6 +96,18 @@ public class FightManager : MonoBehaviour
             Debug.Log("GAME OVER");
             OnGameOver?.Invoke();
         }
+    }
+
+    // Si te falta algun pez y no la has usado: +1 pez. Si estas completo, se guarda para despues.
+    void TryHeal()
+    {
+        if (!oneTimeHeal || HealUsed || Over || Lives >= playerLives) return;
+        if (score.Round + 1 >= score.TotalRounds) return; // la ultima ronda ya es la victoria
+        HealUsed = true;
+        Lives++;
+        Debug.Log("Curacion unica: +1 pez");
+        OnLivesChanged?.Invoke();
+        OnHealed?.Invoke();
     }
 
     void Win()
